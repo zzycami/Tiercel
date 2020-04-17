@@ -215,10 +215,11 @@ public class SessionManager {
         set { protectedState.write { $0.controlExecuter = newValue } }
     }
 
-    
+    private var urlSessionConfiguration: URLSessionConfiguration?
     
     public init(_ identifier: String,
                 configuration: SessionConfiguration,
+                urlSessionConfiguration: URLSessionConfiguration? = nil,
                 logger: Logable? = nil,
                 cache: Cache? = nil,
                 operationQueue: DispatchQueue = DispatchQueue(label: "com.Tiercel.SessionManager.operationQueue",
@@ -229,6 +230,7 @@ public class SessionManager {
             State(logger: logger ?? Logger(identifier: "\(bundleIdentifier).\(identifier)", option: .default),
                   configuration: configuration)
         )
+        self.urlSessionConfiguration = urlSessionConfiguration
         self.operationQueue = operationQueue
         self.cache = cache ?? Cache(identifier)
         self.cache.manager = self
@@ -263,7 +265,12 @@ public class SessionManager {
 
     private func createSession(_ completion: (() -> ())? = nil) {
         guard shouldCreatSession else { return }
-        let sessionConfiguration = URLSessionConfiguration.background(withIdentifier: identifier)
+        var sessionConfiguration:URLSessionConfiguration!
+        if self.urlSessionConfiguration != nil {
+            sessionConfiguration = self.urlSessionConfiguration!
+        }else {
+            sessionConfiguration = URLSessionConfiguration.background(withIdentifier: identifier)
+        }
         sessionConfiguration.timeoutIntervalForRequest = configuration.timeoutIntervalForRequest
         sessionConfiguration.httpMaximumConnectionsPerHost = 100000
         sessionConfiguration.allowsCellularAccess = configuration.allowsCellularAccess
