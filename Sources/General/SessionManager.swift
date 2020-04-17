@@ -312,6 +312,7 @@ extension SessionManager {
                          headers: [String: String]? = nil,
                          fileName: String? = nil,
                          onMainQueue: Bool = true,
+                         requestModifier: DownloadRequestModifier? = nil,
                          handler: Handler<DownloadTask>? = nil) -> DownloadTask? {
         do {
             let validURL = try url.asURL()
@@ -326,6 +327,7 @@ extension SessionManager {
                                         fileName: fileName,
                                         cache: cache,
                                         operationQueue: operationQueue)
+                    task.requestModifier = requestModifier
                     task.manager = self
                     task.session = session
                     maintainTasks(with: .append(task))

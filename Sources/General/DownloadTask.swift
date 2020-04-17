@@ -26,6 +26,26 @@
 
 import UIKit
 
+/// Represents and wraps a method for modifying request before an image download request starts.
+public protocol DownloadRequestModifier {
+
+    /// A method will be called just before the `request` being sent.
+    /// This is the last chance you can modify the image download request. You can modify the request for some
+    /// customizing purpose, such as adding auth token to the header, do basic HTTP auth or something like url mapping.
+    ///
+    /// Usually, you pass an `ImageDownloadRequestModifier` as the associated value of
+    /// `KingfisherOptionsInfoItem.requestModifier` and use it as the `options` parameter in related methods.
+    ///
+    /// If you do nothing with the input `request` and return it as is, a downloading process will start with it.
+    ///
+    /// - Parameter request: The input request contains necessary information like `url`. This request is generated
+    ///                      according to your resource url as a GET request.
+    /// - Returns: A modified version of request, which you wish to use for downloading an image. If `nil` returned,
+    ///            a `KingfisherError.requestError` with `.emptyRequest` as its reason will occur.
+    ///
+    func modified(for request: URLRequest) -> URLRequest?
+}
+
 public class DownloadTask: Task<DownloadTask> {
     
     private enum CodingKeys: CodingKey {
@@ -62,6 +82,8 @@ public class DownloadTask: Task<DownloadTask> {
     public var filePath: String {
         return cache.filePath(fileName: fileName)!
     }
+    
+    public var requestModifier: DownloadRequestModifier?
 
     public var pathExtension: String? {
         let pathExtension = (filePath as NSString).pathExtension
@@ -233,7 +255,15 @@ extension DownloadTask {
                 }
             } else {
                 var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 0)
-                if let headers = headers {
+                if let  modifiedRequest = requestModifier?.modified(for: request) {
+                    request = modifiedRequest
+                }
+                if var headers = headers {
+                    if let originalHeader = request.allHTTPHeaderFields {
+                        for (key, value) in originalHeader {
+                            headers[key] = value
+                        }
+                    }
                     request.allHTTPHeaderFields = headers
                 }
                 sessionTask = session?.downloadTask(with: request)
