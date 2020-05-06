@@ -40,6 +40,8 @@ public class SessionManager {
     
     public let cache: Cache
     
+    public var requestModifier: DownloadRequestModifier?
+    
     public let identifier: String
     
     public var completionHandler: (() -> Void)?
@@ -327,7 +329,7 @@ extension SessionManager {
                                         fileName: fileName,
                                         cache: cache,
                                         operationQueue: operationQueue)
-                    task.requestModifier = requestModifier
+                    task.requestModifier = requestModifier ?? self.requestModifier
                     task.manager = self
                     task.session = session
                     maintainTasks(with: .append(task))
@@ -400,6 +402,7 @@ extension SessionManager {
                     task.session = session
                     maintainTasks(with: .append(task))
                 }
+                task.requestModifier = self.requestModifier
                 uniqueTasks.append(task)
             }
             storeTasks()
@@ -463,6 +466,7 @@ extension SessionManager {
     
     private func _start(_ task: DownloadTask, onMainQueue: Bool = true, handler: Handler<DownloadTask>? = nil) {
         task.controlExecuter = Executer(onMainQueue: onMainQueue, handler: handler)
+        task.requestModifier = self.requestModifier
         didStart()
         if !shouldCreatSession {
             task.download()
@@ -862,7 +866,7 @@ extension SessionManager {
 // MARK: - info
 extension SessionManager {
 
-    static let refreshInterval: Double = 1
+    static let refreshInterval: Double = 0.2
 
     private func createTimer() {
         if timer == nil {

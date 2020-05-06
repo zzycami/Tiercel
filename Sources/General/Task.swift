@@ -50,6 +50,7 @@ public class Task<TaskType>: NSObject, Codable {
         case verificationType
         case validation
         case error
+        case accessory
     }
     
     enum CompletionType {
@@ -88,6 +89,7 @@ public class Task<TaskType>: NSObject, Codable {
         var fileName: String
         var timeRemaining: Int64 = 0
         var error: Error?
+        var accessory: String?
 
         var progressExecuter: Executer<TaskType>?
         var successExecuter: Executer<TaskType>?
@@ -166,7 +168,11 @@ public class Task<TaskType>: NSObject, Codable {
     public var endDateString: String {
         endDate.tr.convertTimeToDateString()
     }
-
+    
+    public var accessory: String? {
+        get { protectedState.directValue.accessory }
+        set { protectedState.write { $0.accessory = newValue } }
+    }
 
     public internal(set) var speed: Int64 {
         get { protectedState.directValue.speed }
@@ -256,6 +262,8 @@ public class Task<TaskType>: NSObject, Codable {
         try container.encodeIfPresent(verificationCode, forKey: .verificationCode)
         try container.encode(verificationType.rawValue, forKey: .verificationType)
         try container.encode(validation.rawValue, forKey: .validation)
+        try container.encode(accessory, forKey: .accessory)
+        
         if let error = error {
             let errorData: Data
             if #available(iOS 11.0, *) {
@@ -292,6 +300,7 @@ public class Task<TaskType>: NSObject, Codable {
             $0.status = Status(rawValue: statusString)!
             $0.verificationType = FileChecksumHelper.VerificationType(rawValue: verificationTypeInt)!
             $0.validation = Validation(rawValue: validationType)!
+            $0.accessory = try container.decode(String.self, forKey: .accessory)
             if let errorData = try container.decodeIfPresent(Data.self, forKey: .error) {
                 if #available(iOS 11.0, *) {
                     $0.error = try? NSKeyedUnarchiver.unarchivedObject(ofClass: NSError.self, from: errorData)
