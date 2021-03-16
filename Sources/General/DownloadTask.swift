@@ -212,7 +212,7 @@ extension DownloadTask {
             }
         case .succeeded:
             executeControl()
-            succeeded(fromRunning: false)
+            succeeded(fromRunning: false, immediately: false)
         case .running:
             status = .running
             executeControl()
@@ -377,7 +377,7 @@ extension DownloadTask {
     }
 
 
-    internal func succeeded(fromRunning: Bool) {
+    internal func succeeded(fromRunning: Bool, immediately: Bool) {
         if endDate == 0 {
             protectedState.write {
                 $0.endDate = Date().timeIntervalSince1970
@@ -387,7 +387,9 @@ extension DownloadTask {
         status = .succeeded
         progress.completedUnitCount = progress.totalUnitCount
         progressExecuter?.execute(self)
-        executeCompletion(true)
+        if immediately {
+          executeCompletion(true)
+        }
         validateFile()
         manager?.maintainTasks(with: .succeeded(self))
         manager?.determineStatus(fromRunningTask: fromRunning)
@@ -561,7 +563,7 @@ extension DownloadTask {
             case .willSuspend,.willCancel, .willRemove:
                 determineStatus(with: .manual)
             case .running:
-                succeeded(fromRunning: false)
+                succeeded(fromRunning: false, immediately: true)
             default:
                 return
             }
@@ -590,7 +592,7 @@ extension DownloadTask {
                     determineStatus(with: .statusCode(statusCode))
                 } else {
                     resumeData = nil
-                    succeeded(fromRunning: true)
+                    succeeded(fromRunning: true, immediately: true)
                 }
             default:
                 return
