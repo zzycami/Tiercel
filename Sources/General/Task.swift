@@ -25,6 +25,7 @@
 //
 
 import Foundation
+import STURLSession
 
 extension Task {
     public enum Validation: Int {
@@ -55,7 +56,7 @@ public class Task<TaskType>: NSObject, Codable {
     
     enum CompletionType {
         case local
-        case network(task: URLSessionTask, error: Error?)
+        case network(task: STURLSessionTask, error: Error?)
     }
     
     enum InterruptType {
@@ -75,7 +76,7 @@ public class Task<TaskType>: NSObject, Codable {
     public let progress: Progress = Progress()
 
     internal struct State {
-        var session: URLSession?
+        var session: STURLSession?
         var headers: [String: String]?
         var verificationCode: String?
         var verificationType: FileChecksumHelper.VerificationType = .md5
@@ -102,7 +103,7 @@ public class Task<TaskType>: NSObject, Codable {
     
     internal let protectedState: Protector<State>
     
-    internal var session: URLSession? {
+    internal var session: STURLSession? {
         get { protectedState.directValue.session }
         set { protectedState.write { $0.session = newValue } }
     }

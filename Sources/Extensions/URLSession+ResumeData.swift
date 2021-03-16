@@ -25,14 +25,15 @@
 //
 
 import Foundation
+import STURLSession
 
-extension URLSession {
+extension STURLSession {
     
     /// 把有bug的resumeData修复，然后创建task
     ///
     /// - Parameter resumeData:
     /// - Returns:
-    internal func correctedDownloadTask(withResumeData resumeData: Data) -> URLSessionDownloadTask {
+    internal func correctedDownloadTask(withResumeData resumeData: Data) -> STURLSessionDownloadTask {
         
         let task = downloadTask(withResumeData: resumeData)
         

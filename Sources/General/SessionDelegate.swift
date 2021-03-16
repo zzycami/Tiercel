@@ -25,6 +25,7 @@
 //
 
 import UIKit
+import STURLSession
 
 internal class SessionDelegate: NSObject {
     internal weak var manager: SessionManager?
@@ -32,18 +33,22 @@ internal class SessionDelegate: NSObject {
 }
 
 
-extension SessionDelegate: URLSessionDownloadDelegate {
-    public func urlSession(_ session: URLSession, didBecomeInvalidWithError error: Error?) {
+extension SessionDelegate: STURLSessionDownloadDelegate {
+    func urlSession(_ session: STURLSession, downloadTask: STURLSessionDownloadTask, didResumeAtOffset fileOffset: Int64, expectedTotalBytes: Int64) {
+        
+    }
+    
+    public func urlSession(_ session: STURLSession, didBecomeInvalidWithError error: Error?) {
         manager?.didBecomeInvalidation(withError: error)
     }
     
     
-    public func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
+    public func urlSessionDidFinishEvents(forBackgroundURLSession session: STURLSession) {
         manager?.didFinishEvents(forBackgroundURLSession: session)
     }
     
     
-    public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+    public func urlSession(_ session: STURLSession, downloadTask: STURLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
         guard let manager = manager else { return }
         guard let currentURL = downloadTask.currentRequest?.url else { return }
         guard let task = manager.mapTask(currentURL) else {
@@ -56,7 +61,7 @@ extension SessionDelegate: URLSessionDownloadDelegate {
     }
     
     
-    public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+    public func urlSession(_ session: STURLSession, downloadTask: STURLSessionDownloadTask, didFinishDownloadingTo location: URL) {
         guard let manager = manager else { return }
         guard let currentURL = downloadTask.currentRequest?.url else { return }
         guard let task = manager.mapTask(currentURL) else {
@@ -66,7 +71,7 @@ extension SessionDelegate: URLSessionDownloadDelegate {
         task.didFinishDownloading(task: downloadTask, to: location)
     }
     
-    public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+    public func urlSession(_ session: STURLSession, task: STURLSessionTask, didCompleteWithError error: Error?) {
         guard let manager = manager else { return }
         if let currentURL = task.currentRequest?.url {
             guard let downloadTask = manager.mapTask(currentURL) else {

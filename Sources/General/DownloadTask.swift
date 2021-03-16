@@ -25,6 +25,7 @@
 //
 
 import UIKit
+import STURLSession
 
 /// Represents and wraps a method for modifying request before an image download request starts.
 public protocol DownloadRequestModifier {
@@ -55,7 +56,7 @@ public class DownloadTask: Task<DownloadTask> {
 
     private var acceptableStatusCodes: Range<Int> { return 200..<300 }
     
-    private var _sessionTask: URLSessionDownloadTask? {
+    private var _sessionTask: STURLSessionDownloadTask? {
         willSet {
             _sessionTask?.removeObserver(self, forKeyPath: "currentRequest")
         }
@@ -64,7 +65,7 @@ public class DownloadTask: Task<DownloadTask> {
         }
     }
     
-    internal var sessionTask: URLSessionDownloadTask? {
+    internal var sessionTask: STURLSessionDownloadTask? {
         get { protectedDownloadState.read { _ in _sessionTask }}
         set { protectedDownloadState.read { _ in _sessionTask = newValue }}
     }
@@ -257,6 +258,8 @@ extension DownloadTask {
                 var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 0)
                 if let  modifiedRequest = requestModifier?.modified(for: request) {
                     request = modifiedRequest
+                    currentURL = request.url ?? currentURL
+                    manager?.updateUrlMapper(with: self)
                 }
                 if var headers = headers {
                     if let originalHeader = request.allHTTPHeaderFields {
@@ -546,7 +549,7 @@ extension DownloadTask {
     }
     
     
-    internal func didFinishDownloading(task: URLSessionDownloadTask, to location: URL) {
+    internal func didFinishDownloading(task: STURLSessionDownloadTask, to location: URL) {
         guard let statusCode = (task.response as? HTTPURLResponse)?.statusCode,
             acceptableStatusCodes.contains(statusCode)
             else { return }

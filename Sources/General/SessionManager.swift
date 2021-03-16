@@ -25,6 +25,7 @@
 //
 
 import UIKit
+import STURLSession
 
 public class SessionManager {
     
@@ -79,7 +80,7 @@ public class SessionManager {
                 }
             }
         }
-        var session: URLSession?
+        var session: STURLSession?
         var shouldCreatSession: Bool = false
         var timer: DispatchSourceTimer?
         var status: Status = .waiting
@@ -117,7 +118,7 @@ public class SessionManager {
         return runningTasks.count < configuration.maxConcurrentTasksLimit
     }
     
-    private var session: URLSession? {
+    private var session: STURLSession? {
         get { protectedState.directValue.session }
         set { protectedState.write { $0.session = newValue } }
     }
@@ -217,11 +218,11 @@ public class SessionManager {
         set { protectedState.write { $0.controlExecuter = newValue } }
     }
 
-    private var urlSessionConfiguration: URLSessionConfiguration?
+    private var urlSessionConfiguration: STURLSessionConfiguration?
     
     public init(_ identifier: String,
                 configuration: SessionConfiguration,
-                urlSessionConfiguration: URLSessionConfiguration? = nil,
+                urlSessionConfiguration: STURLSessionConfiguration? = nil,
                 logger: Logable? = nil,
                 cache: Cache? = nil,
                 operationQueue: DispatchQueue = DispatchQueue(label: "com.Tiercel.SessionManager.operationQueue",
@@ -267,26 +268,22 @@ public class SessionManager {
 
     private func createSession(_ completion: (() -> ())? = nil) {
         guard shouldCreatSession else { return }
-        var sessionConfiguration:URLSessionConfiguration!
+        var sessionConfiguration:STURLSessionConfiguration!
         if self.urlSessionConfiguration != nil {
             sessionConfiguration = self.urlSessionConfiguration!
         }else {
-            sessionConfiguration = URLSessionConfiguration.background(withIdentifier: identifier)
+            sessionConfiguration = STURLSessionConfiguration.default
         }
         sessionConfiguration.timeoutIntervalForRequest = configuration.timeoutIntervalForRequest
         sessionConfiguration.httpMaximumConnectionsPerHost = 100000
         sessionConfiguration.allowsCellularAccess = configuration.allowsCellularAccess
-        if #available(iOS 13, *) {
-            sessionConfiguration.allowsConstrainedNetworkAccess = configuration.allowsConstrainedNetworkAccess
-            sessionConfiguration.allowsExpensiveNetworkAccess = configuration.allowsExpensiveNetworkAccess
-        }
         let sessionDelegate = SessionDelegate()
         sessionDelegate.manager = self
         let delegateQueue = OperationQueue(maxConcurrentOperationCount: 1,
                                            underlyingQueue: operationQueue,
                                            name: "com.Tiercel.SessionManager.delegateQueue")
         protectedState.write {
-            let session = URLSession(configuration: sessionConfiguration,
+            let session = STURLSession(configuration: sessionConfiguration,
                                      delegate: sessionDelegate,
                                      delegateQueue: delegateQueue)
             $0.session = session
@@ -993,7 +990,7 @@ extension SessionManager {
         }
     }
     
-    internal func didFinishEvents(forBackgroundURLSession session: URLSession) {
+    internal func didFinishEvents(forBackgroundURLSession session: STURLSession) {
         DispatchQueue.tr.executeOnMain {
             self.completionHandler?()
             self.completionHandler = nil
